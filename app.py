@@ -276,7 +276,7 @@ st.markdown(
     <div class="info-card">
         <div class="info-title">💡 說明與資訊 / App Info</div>
         <div class="info-item"><b>🎯 作業目標：</b>使用 Hugging Face 的生成模型透過文字生成圖像。</div>
-        <div class="info-item"><b>🤖 預設模型：</b><code>black-forest-labs/FLUX.1-schnell</code></div>
+        <div class="info-item"><b>🤖 預設模型：</b><code>stabilityai/stable-diffusion-xl-base-1.0</code></div>
         <div class="info-item"><b>📝 使用說明：</b>設定 API Token、輸入文字 Prompt，展開「進階參數」微調設定，點擊「開始生成」即可。</div>
         <div class="link-list">
             <a class="link-button" href="https://github.com/Frank40281-stack/Cosmos3-Super-Text2Image-App-0604" target="_blank">🐙 GitHub Repo</a>
@@ -329,12 +329,12 @@ with st.expander("🛠️ 進階設定 / Advanced Parameters", expanded=False):
     model_choice = st.selectbox(
         "🤖 生成模型 (Model)",
         options=[
+            "stabilityai/stable-diffusion-xl-base-1.0",
             "black-forest-labs/FLUX.1-schnell",
-            "nvidia/Cosmos3-Super-Text2Image",
-            "stabilityai/stable-diffusion-xl-base-1.0"
+            "nvidia/Cosmos3-Super-Text2Image"
         ],
         index=0,
-        help="預設使用黑森林實驗室 FLUX.1-schnell 生圖模型。作業指定的 nvidia/Cosmos3-Super-Text2Image 由於體積過大，在免費 API 易傳回 404。"
+        help="預設使用 Stable Diffusion XL (SDXL) 生圖模型。此模型為開放存取，無需在 HF 網頁簽署協議即可直接生成圖片。"
     )
     
     # Image Style Presets
@@ -507,11 +507,11 @@ if st.button("✨ 開始生成 (Generate)", disabled=is_key_missing):
             
         # Check if Cosmos3 model returned 404 (indicating serverless inference is not hosted/supported)
         if model_choice == "nvidia/Cosmos3-Super-Text2Image" and any(res.get("status_code") == 404 for res in results):
-            status_box.warning("⚠️ Hugging Face 免費 API 不支援 Cosmos3 巨型模型 (HTTP 404)。已自動為您切換至推薦備用模型 FLUX.1-schnell 重新生成...")
+            status_box.warning("⚠️ Hugging Face 免費 API 不支援 Cosmos3 巨型模型 (HTTP 404)。已自動為您切換至開放模型 SDXL 重新生成...")
             time.sleep(2.0)
-            status_box.info("🚀 正在發送請求至備用模型 FLUX.1-schnell...")
+            status_box.info("🚀 正在發送請求至備用模型 stabilityai/stable-diffusion-xl-base-1.0...")
             
-            fallback_model = "black-forest-labs/FLUX.1-schnell"
+            fallback_model = "stabilityai/stable-diffusion-xl-base-1.0"
             with ThreadPoolExecutor(max_workers=min(4, num_images)) as executor:
                 future_to_img = {
                     executor.submit(call_huggingface_api, i, seeds_to_use[i], fallback_model): i 
@@ -563,7 +563,7 @@ if st.button("✨ 開始生成 (Generate)", disabled=is_key_missing):
 st.markdown(
     """
     <div class="footer">
-        <div>Model: black-forest-labs/FLUX.1-schnell</div>
+        <div>Model: stabilityai/stable-diffusion-xl-base-1.0</div>
         <div style="margin-top: 4px;">HW3 AI Image App © 2026</div>
     </div>
     """,

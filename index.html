@@ -351,7 +351,7 @@
         <div class="info-card">
             <div class="info-title">💡 說明與資訊 / App Info</div>
             <div class="info-item"><b>🎯 作業目標：</b>使用 Hugging Face 的生成模型透過文字生成圖像。</div>
-            <div class="info-item"><b>🤖 預設模型：</b><code>black-forest-labs/FLUX.1-schnell</code></div>
+            <div class="info-item"><b>🤖 預設模型：</b><code>stabilityai/stable-diffusion-xl-base-1.0</code></div>
             <div class="info-item"><b>📝 使用說明：</b>設定 API Token、輸入文字 Prompt，展開「進階設定」微調設定，點擊「開始生成」即可。 Token 會儲存於您的瀏覽器中以供下次使用。</div>
             <div class="link-list">
                 <a class="link-button" href="https://github.com/Frank40281-stack/Cosmos3-Super-Text2Image-App-0604" target="_blank">🐙 GitHub Repo</a>
@@ -383,9 +383,9 @@
                 <div class="form-group">
                     <label for="model-select">🤖 生成模型 (Model)</label>
                     <select id="model-select" class="input-control">
-                        <option value="black-forest-labs/FLUX.1-schnell" selected>black-forest-labs/FLUX.1-schnell</option>
+                        <option value="stabilityai/stable-diffusion-xl-base-1.0" selected>stabilityai/stable-diffusion-xl-base-1.0</option>
+                        <option value="black-forest-labs/FLUX.1-schnell">black-forest-labs/FLUX.1-schnell</option>
                         <option value="nvidia/Cosmos3-Super-Text2Image">nvidia/Cosmos3-Super-Text2Image</option>
-                        <option value="stabilityai/stable-diffusion-xl-base-1.0">stabilityai/stable-diffusion-xl-base-1.0</option>
                     </select>
                 </div>
 
@@ -455,7 +455,7 @@
 
         <!-- Page Footer -->
         <div class="footer">
-            <div>Model: black-forest-labs/FLUX.1-schnell</div>
+            <div>Model: stabilityai/stable-diffusion-xl-base-1.0</div>
             <div style="margin-top: 4px;">HW3 AI Image App © 2026</div>
         </div>
 
@@ -589,12 +589,12 @@
             try {
                 let results = await Promise.all(tasks);
                 
-                // If Cosmos3 model returns 404 Not Found, automatically fallback to FLUX.1-schnell
+                // If Cosmos3 model returns 404 Not Found, automatically fallback to stabilityai/stable-diffusion-xl-base-1.0
                 const has404 = results.some(res => !res.success && res.statusCode === 404);
                 if (has404 && modelId === "nvidia/Cosmos3-Super-Text2Image") {
-                    showStatus('⚠️ Hugging Face 免費 API 不支援 Cosmos3 巨型模型 (HTTP 404)。已自動切換至推薦備用模型 FLUX.1-schnell 重新生成...', 'info');
+                    showStatus('⚠️ Hugging Face 免費 API 不支援 Cosmos3 巨型模型 (HTTP 404)。已自動切換至開放模型 SDXL 重新生成...', 'info');
                     
-                    const fallbackModel = "black-forest-labs/FLUX.1-schnell";
+                    const fallbackModel = "stabilityai/stable-diffusion-xl-base-1.0";
                     const fallbackTasks = [];
                     for (let i = 0; i < numImages; i++) {
                         const currentSeed = baseSeed + i;
