@@ -403,6 +403,13 @@ width, height = aspect_sizes[aspect_ratio]
 
 # --- API Inference Function (with DNS/Proxy fallback support) ---
 def call_huggingface_api(img_index, current_seed, target_model=None):
+    # Sanitize Token (Auto-strip quotes and variable declarations)
+    clean_token = api_token.strip() if api_token else ""
+    if clean_token.upper().startswith("HF_TOKEN"):
+        if "=" in clean_token:
+            clean_token = clean_token.split("=", 1)[-1].strip()
+    clean_token = clean_token.strip("'\"")
+
     domains = [
         "https://router.huggingface.co",
         "https://api-inference.huggingface.co",
@@ -415,7 +422,7 @@ def call_huggingface_api(img_index, current_seed, target_model=None):
     for domain in domains:
         api_url = f"{domain}/models/{model_to_use}"
         headers = {
-            "Authorization": f"Bearer {api_token}",
+            "Authorization": f"Bearer {clean_token}",
             "Content-Type": "application/json"
         }
         

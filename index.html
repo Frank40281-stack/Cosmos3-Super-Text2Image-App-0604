@@ -633,6 +633,16 @@
 
         // Call HF API via Fetch (with DNS fallback support)
         async function callHF(modelId, token, prompt, width, height, seed, index) {
+            // Sanitize Token (Auto-strip quotes and variable declarations)
+            let cleanToken = token.trim();
+            if (cleanToken.toUpperCase().startsWith("HF_TOKEN")) {
+                const eqIdx = cleanToken.indexOf("=");
+                if (eqIdx !== -1) {
+                    cleanToken = cleanToken.substring(eqIdx + 1).trim();
+                }
+            }
+            cleanToken = cleanToken.replace(/^["']|["']$/g, '');
+
             const domains = [
                 'https://router.huggingface.co',
                 'https://api-inference.huggingface.co',
@@ -644,7 +654,7 @@
             for (const domain of domains) {
                 const url = `${domain}/models/${modelId}`;
                 const headers = {
-                    'Authorization': `Bearer ${token}`,
+                    'Authorization': `Bearer ${cleanToken}`,
                     'Content-Type': 'application/json'
                 };
                 const body = {
