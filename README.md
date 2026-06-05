@@ -6,7 +6,12 @@ This project uses Streamlit and Hugging Face to build a text-to-image generation
 
 ## Model
 
-Model: `nvidia/Cosmos3-Super-Text2Image`
+Default Model: `black-forest-labs/FLUX.1-schnell`
+
+Supported Models:
+- `black-forest-labs/FLUX.1-schnell` (Default)
+- `nvidia/Cosmos3-Super-Text2Image` (HW3 Target Model)
+- `stabilityai/stable-diffusion-xl-base-1.0`
 
 ## How to Run Locally
 
