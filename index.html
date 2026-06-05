@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cosmos3 Image Studio</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: rgba(30, 41, 59, 0.45);
+            --card-border: rgba(255, 255, 255, 0.08);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --text-bright: #cbd5e1;
+            --primary-grad: linear-gradient(135deg, #a855f7 0%, #6366f1 100%);
+            --accent-grad: linear-gradient(135deg, #a78bfa 0%, #f43f5e 50%, #6366f1 100%);
+            --input-bg: rgba(15, 23, 42, 0.6);
+            --input-border: rgba(255, 255, 255, 0.1);
+            --accent-glow: rgba(168, 85, 247, 0.4);
+            --transition-speed: 0.3s;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.5;
+            padding: 2rem 1rem;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 540px; /* Mobile width */
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        /* Title style */
+        .header {
+            text-align: center;
+        }
+
+        .app-title {
+            background: var(--accent-grad);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-size: 2.2rem;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            margin-bottom: 0.2rem;
+        }
+
+        .app-subtitle {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+
+        /* Glassmorphic Info Card */
+        .info-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 1.2rem;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+
+        .info-title {
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: var(--text-main);
+            margin-bottom: 0.6rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .info-item {
+            font-size: 0.85rem;
+            color: var(--text-bright);
+            margin-bottom: 0.4rem;
+            line-height: 1.4;
+        }
+
+        .link-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.8rem;
+            justify-content: center;
+            margin-top: 1rem;
+        }
+
+        .link-button {
+            display: inline-block;
+            padding: 0.4rem 0.8rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            color: #a78bfa;
+            font-size: 0.8rem;
+            font-weight: 500;
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+
+        .link-button:hover {
+            background: rgba(167, 139, 250, 0.1);
+            border-color: rgba(167, 139, 250, 0.3);
+            transform: scale(1.02);
+        }
+
+        /* Forms & Inputs */
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        label {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        .input-control {
+            font-family: inherit;
+            font-size: 0.95rem;
+            padding: 0.75rem;
+            border-radius: 10px;
+            border: 1px solid var(--input-border);
+            background-color: var(--input-bg);
+            color: var(--text-main);
+            transition: all var(--transition-speed) ease;
+            width: 100%;
+        }
+
+        .input-control:focus {
+            outline: none;
+            border-color: #6366f1;
+            box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+        }
+
+        textarea.input-control {
+            resize: vertical;
+            min-height: 85px;
+        }
+
+        /* Collapsible accordion */
+        details {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 0.8rem 1.2rem;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+        }
+
+        summary {
+            font-weight: 600;
+            cursor: pointer;
+            user-select: none;
+            padding: 0.4rem 0;
+            outline: none;
+        }
+
+        .details-content {
+            margin-top: 1rem;
+            padding-top: 0.5rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        /* Button Styling */
+        .btn-generate {
+            font-family: inherit;
+            background: var(--primary-grad);
+            color: #ffffff;
+            border: none;
+            border-radius: 10px;
+            padding: 0.85rem 1.5rem;
+            font-weight: 700;
+            font-size: 1.05rem;
+            width: 100%;
+            cursor: pointer;
+            transition: all var(--transition-speed) cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 14px 0 var(--accent-glow);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-generate:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px 0 rgba(168, 85, 247, 0.6);
+        }
+
+        .btn-generate:active {
+            transform: translateY(1px);
+        }
+
+        .btn-generate:disabled {
+            background: #334155;
+            box-shadow: none;
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+        /* Alerts & Statuses */
+        .status-box {
+            padding: 1rem;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            display: none;
+            line-height: 1.4;
+        }
+
+        .status-info {
+            background-color: rgba(59, 130, 246, 0.15);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            color: #60a5fa;
+            display: block;
+        }
+
+        .status-error {
+            background-color: rgba(239, 68, 68, 0.15);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #f87171;
+        }
+
+        .status-success {
+            background-color: rgba(16, 185, 129, 0.15);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            color: #34d399;
+        }
+
+        /* Image Display Grid */
+        .results-container {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .image-card {
+            background: rgba(30, 41, 59, 0.3);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .image-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-bright);
+        }
+
+        .image-wrapper {
+            position: relative;
+            width: 100%;
+            background-color: rgba(0,0,0,0.2);
+            border-radius: 8px;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .image-wrapper img {
+            max-width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .btn-download {
+            font-family: inherit;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #a78bfa;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-align: center;
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+
+        .btn-download:hover {
+            background: rgba(167, 139, 250, 0.1);
+            border-color: rgba(167, 139, 250, 0.3);
+        }
+
+        /* Loading Spinner */
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+            display: none;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Footer styling */
+        .footer {
+            text-align: center;
+            padding: 1.5rem 0;
+            color: #475569;
+            font-size: 0.75rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            margin-top: 2rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        
+        <!-- Header -->
+        <div class="header">
+            <h1 class="app-title">Cosmos3 Image Studio</h1>
+            <p class="app-subtitle">HW3: Text-to-Image Generation App (HTML Edition)</p>
+        </div>
+
+        <!-- Info Card -->
+        <div class="info-card">
+            <div class="info-title">💡 說明與資訊 / App Info</div>
+            <div class="info-item"><b>🎯 作業目標：</b>使用 Hugging Face 的生成模型透過文字生成圖像。</div>
+            <div class="info-item"><b>🤖 預設模型：</b><code>nvidia/Cosmos3-Super-Text2Image</code></div>
+            <div class="info-item"><b>📝 使用說明：</b>設定 API Token、輸入文字 Prompt，展開「進階設定」微調設定，點擊「開始生成」即可。 Token 會儲存於您的瀏覽器中以供下次使用。</div>
+            <div class="link-list">
+                <a class="link-button" href="https://github.com" target="_blank">🐙 GitHub Repo</a>
+                <a class="link-button" href="https://share.streamlit.io" target="_blank">🚀 Streamlit Cloud</a>
+            </div>
+        </div>
+
+        <!-- API Key Form Group -->
+        <div class="info-card">
+            <div class="form-group" style="margin-bottom: 0;">
+                <label for="api-token">🔑 Hugging Face API Token</label>
+                <input type="password" id="api-token" class="input-control" placeholder="Enter your Hugging Face API Token">
+            </div>
+        </div>
+
+        <!-- Main inputs -->
+        <div class="form-group">
+            <label for="prompt">🎨 Prompt / 畫面描述</label>
+            <textarea id="prompt" class="input-control" placeholder="描述你想要生成的圖像，例如: A futuristic city with flying cars at sunset..."></textarea>
+        </div>
+
+        <!-- Advanced Parameters Accordion -->
+        <details>
+            <summary>🛠️ 進階設定 / Advanced Parameters</summary>
+            <div class="details-content">
+                
+                <!-- Model select -->
+                <div class="form-group">
+                    <label for="model-select">🤖 生成模型 (Model)</label>
+                    <select id="model-select" class="input-control">
+                        <option value="nvidia/Cosmos3-Super-Text2Image">nvidia/Cosmos3-Super-Text2Image</option>
+                        <option value="black-forest-labs/FLUX.1-schnell">black-forest-labs/FLUX.1-schnell</option>
+                        <option value="stabilityai/stable-diffusion-xl-base-1.0">stabilityai/stable-diffusion-xl-base-1.0</option>
+                    </select>
+                </div>
+
+                <!-- Preset Style -->
+                <div class="form-group">
+                    <label for="style-select">✨ 風格預設 (Style Preset)</label>
+                    <select id="style-select" class="input-control">
+                        <option value="none">無 (None)</option>
+                        <option value="photo">寫實 (Photorealistic)</option>
+                        <option value="anime">動漫 (Anime)</option>
+                        <option value="fantasy">奇幻 (Fantasy)</option>
+                        <option value="cyberpunk">賽博朋克 (Cyberpunk)</option>
+                        <option value="oil">油畫 (Oil Painting)</option>
+                        <option value="3d">3D 渲染 (3D Render)</option>
+                    </select>
+                </div>
+
+                <!-- Aspect Ratio -->
+                <div class="form-group">
+                    <label for="aspect-select">📐 寬高比 (Aspect Ratio)</label>
+                    <select id="aspect-select" class="input-control">
+                        <option value="1:1" selected>1:1 (Square - 1024x1024)</option>
+                        <option value="16:9">16:9 (Landscape - 1024x576)</option>
+                        <option value="9:16">9:16 (Portrait - 576x1024)</option>
+                        <option value="4:3">4:3 (Standard - 1024x768)</option>
+                        <option value="3:4">3:4 (Vertical - 768x1024)</option>
+                    </select>
+                </div>
+
+                <!-- Negative Prompt -->
+                <div class="form-group">
+                    <label for="negative-prompt">🚫 負面 Prompt (Negative Prompt)</label>
+                    <textarea id="negative-prompt" class="input-control" placeholder="不想出現在畫面中的內容..."></textarea>
+                </div>
+
+                <!-- Seed Configuration -->
+                <div class="form-group" style="flex-direction: row; align-items: center; gap: 0.5rem;">
+                    <input type="checkbox" id="random-seed" checked style="width: 18px; height: 18px; cursor: pointer;">
+                    <label for="random-seed" style="cursor: pointer;">🎲 隨機隨機種子 (Random Seed)</label>
+                </div>
+                
+                <div class="form-group" id="seed-input-group" style="display: none;">
+                    <label for="seed-val">種子碼 (Seed)</label>
+                    <input type="number" id="seed-val" class="input-control" value="42" min="1">
+                </div>
+
+                <!-- Number of Images -->
+                <div class="form-group">
+                    <label for="num-images" id="num-images-label">🖼️ 生成圖片張數 (Number of Images): 1</label>
+                    <input type="range" id="num-images" min="1" max="4" value="1" class="input-control" style="cursor: pointer;">
+                </div>
+
+            </div>
+        </details>
+
+        <!-- Generate Button -->
+        <button id="btn-generate" class="btn-generate">
+            <span class="spinner" id="btn-spinner"></span>
+            <span id="btn-text">✨ 開始生成 (Generate)</span>
+        </button>
+
+        <!-- Status Alerts -->
+        <div id="status-message" class="status-box"></div>
+
+        <!-- Results Grid -->
+        <div id="results-grid" class="results-container"></div>
+
+        <!-- Page Footer -->
+        <div class="footer">
+            <div>Model: nvidia/Cosmos3-Super-Text2Image</div>
+            <div style="margin-top: 4px;">HW3 AI Image App © 2026</div>
+        </div>
+
+    </div>
+
+    <script>
+        // DOM Elements
+        const apiTokenInput = document.getElementById('api-token');
+        const promptInput = document.getElementById('prompt');
+        const modelSelect = document.getElementById('model-select');
+        const styleSelect = document.getElementById('style-select');
+        const aspectSelect = document.getElementById('aspect-select');
+        const negativePromptInput = document.getElementById('negative-prompt');
+        const randomSeedCheckbox = document.getElementById('random-seed');
+        const seedInputGroup = document.getElementById('seed-input-group');
+        const seedValInput = document.getElementById('seed-val');
+        const numImagesInput = document.getElementById('num-images');
+        const numImagesLabel = document.getElementById('num-images-label');
+        const btnGenerate = document.getElementById('btn-generate');
+        const btnSpinner = document.getElementById('btn-spinner');
+        const btnText = document.getElementById('btn-text');
+        const statusMessage = document.getElementById('status-message');
+        const resultsGrid = document.getElementById('results-grid');
+
+        // Style Prompts
+        const stylePrompts = {
+            'none': '',
+            'photo': ', photorealistic, highly detailed, 8k resolution, cinematic lighting, dramatic shading',
+            'anime': ', anime style, vibrant colors, detailed digital illustration, cute aesthetic, masterpiece',
+            'fantasy': ', fantasy digital art, ethereal environment, glowing details, highly imaginative, magical atmosphere',
+            'cyberpunk': ', cyberpunk aesthetic, neon glowing lights, futuristic cityscape, dark synthwave vibe, highly detailed',
+            'oil': ', classical oil painting style, visible brush strokes, textured canvas, fine art',
+            '3d': ', 3D render, blender style, smooth textures, octane render, stylized character design'
+        };
+
+        // Aspect Sizes
+        const aspectSizes = {
+            '1:1': { w: 1024, h: 1024 },
+            '16:9': { w: 1024, h: 576 },
+            '9:16': { w: 576, h: 1024 },
+            '4:3': { w: 1024, h: 768 },
+            '3:4': { w: 768, h: 1024 }
+        };
+
+        // Load saved API Token from localStorage
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedToken = localStorage.getItem('hf_token');
+            if (savedToken) {
+                apiTokenInput.value = savedToken;
+            }
+        });
+
+        // Save API Token when modified
+        apiTokenInput.addEventListener('input', () => {
+            localStorage.setItem('hf_token', apiTokenInput.value.trim());
+        });
+
+        // Toggle seed input visibility
+        randomSeedCheckbox.addEventListener('change', () => {
+            if (randomSeedCheckbox.checked) {
+                seedInputGroup.style.display = 'none';
+            } else {
+                seedInputGroup.style.display = 'flex';
+            }
+        });
+
+        // Update number of images label
+        numImagesInput.addEventListener('input', () => {
+            numImagesLabel.innerText = `🖼️ 生成圖片張數 (Number of Images): ${numImagesInput.value}`;
+        });
+
+        // Display status helper
+        function showStatus(text, type) {
+            statusMessage.className = 'status-box'; // reset
+            statusMessage.style.display = 'block';
+            statusMessage.innerText = text;
+            if (type === 'info') statusMessage.classList.add('status-info');
+            if (type === 'error') statusMessage.classList.add('status-error');
+            if (type === 'success') statusMessage.classList.add('status-success');
+        }
+
+        function hideStatus() {
+            statusMessage.style.display = 'none';
+        }
+
+        // Main Event: Generate Images
+        btnGenerate.addEventListener('click', async () => {
+            const apiToken = apiTokenInput.value.trim();
+            const rawPrompt = promptInput.value.trim();
+
+            // Verification
+            if (!apiToken) {
+                showStatus('⚠️ 請輸入 Hugging Face API Token 以繼續。', 'error');
+                return;
+            }
+            if (!rawPrompt) {
+                showStatus('⚠️ 請輸入畫面描述 (Prompt)。', 'error');
+                return;
+            }
+
+            // Set loading state
+            btnGenerate.disabled = true;
+            btnSpinner.style.display = 'inline-block';
+            btnText.innerText = '正在生成中 (Generating)...';
+            showStatus('🚀 正在連線至 Hugging Face Inference API，請稍候...', 'info');
+            resultsGrid.innerHTML = '';
+
+            const modelId = modelSelect.value;
+            const styleKey = styleSelect.value;
+            const finalPrompt = rawPrompt + stylePrompts[styleKey];
+            
+            const aspectKey = aspectSelect.value;
+            const size = aspectSizes[aspectKey];
+            
+            const numImages = parseInt(numImagesInput.value, 10);
+            
+            // Collect seeds to use
+            let baseSeed = 42;
+            if (randomSeedCheckbox.checked) {
+                baseSeed = Math.floor(Math.random() * 1000000) + 1;
+            } else {
+                baseSeed = parseInt(seedValInput.value, 10) || 42;
+            }
+
+            const tasks = [];
+            for (let i = 0; i < numImages; i++) {
+                const currentSeed = baseSeed + i;
+                tasks.push(callHF(modelId, apiToken, finalPrompt, size.w, size.h, currentSeed, i));
+            }
+
+            try {
+                const results = await Promise.all(tasks);
+                
+                hideStatus();
+                let successCount = 0;
+                let errorMessages = [];
+
+                results.forEach(res => {
+                    if (res.success) {
+                        successCount++;
+                        createImageCard(res.imageUrl, res.index + 1, res.seed);
+                    } else {
+                        errorMessages.push(`圖片 #${res.index + 1} 生成失敗: ${res.error}`);
+                    }
+                });
+
+                if (errorMessages.length > 0) {
+                    showStatus(errorMessages.join('\n'), 'error');
+                } else if (successCount > 0) {
+                    showStatus(`🎉 成功生成 ${successCount} 張圖片！`, 'success');
+                }
+            } catch (err) {
+                showStatus(`發生未預期錯誤: ${err.message}`, 'error');
+            } finally {
+                // Restore button state
+                btnGenerate.disabled = false;
+                btnSpinner.style.display = 'none';
+                btnText.innerText = '✨ 開始生成 (Generate)';
+            }
+        });
+
+        // Call HF API via Fetch
+        async function callHF(modelId, token, prompt, width, height, seed, index) {
+            const url = `https://api-inference.huggingface.co/models/${modelId}`;
+            const headers = {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            };
+            const body = {
+                inputs: prompt,
+                parameters: {
+                    seed: seed,
+                    width: width,
+                    height: height
+                }
+            };
+
+            const negPrompt = negativePromptInput.value.trim();
+            if (negPrompt) {
+                body.parameters.negative_prompt = negPrompt;
+            }
+
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: headers,
+                    body: JSON.stringify(body)
+                });
+
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const imageUrl = URL.createObjectURL(blob);
+                    return { success: true, imageUrl, index, seed };
+                } else if (response.status === 503) {
+                    try {
+                        const errJson = await response.json();
+                        const estTime = errJson.estimated_time || 20;
+                        return { 
+                            success: false, 
+                            index, 
+                            error: `模型正在載入 (Estimated: ${Math.round(estTime)}s). 請重試。` 
+                        };
+                    } catch (e) {
+                        return { success: false, index, error: '模型載入中 (503 Service Unavailable)，請稍後再試。' };
+                    }
+                } else {
+                    try {
+                        const errJson = await response.json();
+                        return { success: false, index, error: errJson.error || `Error code: ${response.status}` };
+                    } catch (e) {
+                        return { success: false, index, error: `HTTP ${response.status}` };
+                    }
+                }
+            } catch (error) {
+                return { success: false, index, error: error.message };
+            }
+        }
+
+        // Create image HTML card dynamic element
+        function createImageCard(url, imgNum, seed) {
+            const card = document.createElement('div');
+            card.className = 'image-card';
+            
+            const title = document.createElement('div');
+            title.className = 'image-title';
+            title.innerText = `Image #${imgNum} (Seed: ${seed})`;
+            
+            const wrapper = document.createElement('div');
+            wrapper.className = 'image-wrapper';
+            
+            const img = document.createElement('img');
+            img.src = url;
+            img.alt = `Generated Image ${imgNum}`;
+            
+            wrapper.appendChild(img);
+            
+            const dlBtn = document.createElement('a');
+            dlBtn.className = 'btn-download';
+            dlBtn.href = url;
+            dlBtn.download = `cosmos_gen_${seed}.png`;
+            dlBtn.innerText = `💾 下載 Image #${imgNum}`;
+            
+            card.appendChild(title);
+            card.appendChild(wrapper);
+            card.appendChild(dlBtn);
+            
+            resultsGrid.appendChild(card);
+        }
+
+        // --- Sakura (Cherry Blossom) Falling Background Effect ---
+        (function() {
+            const canvas = document.createElement('canvas');
+            canvas.id = 'sakura-canvas';
+            canvas.style.position = 'fixed';
+            canvas.style.top = '0';
+            canvas.style.left = '0';
+            canvas.style.width = '100%';
+            canvas.style.height = '100%';
+            canvas.style.zIndex = '-1';
+            canvas.style.pointerEvents = 'none';
+            document.body.insertBefore(canvas, document.body.firstChild);
+
+            const ctx = canvas.getContext('2d');
+            let width = canvas.width = window.innerWidth;
+            let height = canvas.height = window.innerHeight;
+
+            window.addEventListener('resize', () => {
+                width = canvas.width = window.innerWidth;
+                height = canvas.height = window.innerHeight;
+            });
+
+            class Petal {
+                constructor() {
+                    this.reset();
+                    this.y = Math.random() * height; // Distribute petals vertically on start
+                }
+                reset() {
+                    this.x = Math.random() * width;
+                    this.y = -20;
+                    this.r = Math.random() * 6 + 4;
+                    this.swingSpeed = Math.random() * 0.02 + 0.005;
+                    this.swingAngle = Math.random() * Math.PI;
+                    this.fallSpeed = Math.random() * 1.2 + 0.8;
+                    this.rotation = Math.random() * Math.PI;
+                    this.rotationSpeed = Math.random() * 0.02 - 0.01;
+                    const shades = [
+                        'rgba(255, 183, 197, 0.65)',
+                        'rgba(255, 192, 203, 0.7)',
+                        'rgba(255, 209, 220, 0.75)',
+                        'rgba(255, 158, 187, 0.6)'
+                    ];
+                    this.color = shades[Math.floor(Math.random() * shades.length)];
+                }
+                update() {
+                    this.y += this.fallSpeed;
+                    this.swingAngle += this.swingSpeed;
+                    this.x += Math.sin(this.swingAngle) * 0.5;
+                    this.rotation += this.rotationSpeed;
+                    if (this.y > height + 20 || this.x < -20 || this.x > width + 20) {
+                        this.reset();
+                    }
+                }
+                draw() {
+                    ctx.save();
+                    ctx.translate(this.x, this.y);
+                    ctx.rotate(this.rotation);
+                    ctx.beginPath();
+                    ctx.ellipse(0, 0, this.r, this.r / 2, 0, 0, Math.PI * 2);
+                    ctx.fillStyle = this.color;
+                    ctx.fill();
+                    ctx.restore();
+                }
+            }
+
+            const petals = [];
+            const maxPetals = Math.min(50, Math.floor(width / 15));
+            for (let i = 0; i < maxPetals; i++) {
+                petals.push(new Petal());
+            }
+
+            function animate() {
+                ctx.clearRect(0, 0, width, height);
+                petals.forEach(petal => {
+                    petal.update();
+                    petal.draw();
+                });
+                requestAnimationFrame(animate);
+            }
+            animate();
+        })();
+    </script>
+</body>
+</html>
