@@ -617,61 +617,76 @@
             }
         });
 
-        // Call HF API via Fetch
+        // Call HF API via Fetch (with DNS fallback support)
         async function callHF(modelId, token, prompt, width, height, seed, index) {
-            const url = `https://api-inference.huggingface.co/models/${modelId}`;
-            const headers = {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            };
-            const body = {
-                inputs: prompt,
-                parameters: {
-                    seed: seed,
-                    width: width,
-                    height: height
-                }
-            };
-
-            const negPrompt = negativePromptInput.value.trim();
-            if (negPrompt) {
-                body.parameters.negative_prompt = negPrompt;
-            }
-
-            try {
-                const response = await fetch(url, {
-                    method: 'POST',
-                    headers: headers,
-                    body: JSON.stringify(body)
-                });
-
-                if (response.ok) {
-                    const blob = await response.blob();
-                    const imageUrl = URL.createObjectURL(blob);
-                    return { success: true, imageUrl, index, seed };
-                } else if (response.status === 503) {
-                    try {
-                        const errJson = await response.json();
-                        const estTime = errJson.estimated_time || 20;
-                        return { 
-                            success: false, 
-                            index, 
-                            error: `模型正在載入 (Estimated: ${Math.round(estTime)}s). 請重試。` 
-                        };
-                    } catch (e) {
-                        return { success: false, index, error: '模型載入中 (503 Service Unavailable)，請稍後再試。' };
+            const domains = [
+                'https://api-inference.huggingface.co',
+                'https://api.huggingface.co'
+            ];
+            
+            let lastError = null;
+            
+            for (const domain of domains) {
+                const url = `${domain}/models/${modelId}`;
+                const headers = {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                };
+                const body = {
+                    inputs: prompt,
+                    parameters: {
+                        seed: seed,
+                        width: width,
+                        height: height
                     }
-                } else {
-                    try {
-                        const errJson = await response.json();
-                        return { success: false, index, error: errJson.error || `Error code: ${response.status}` };
-                    } catch (e) {
-                        return { success: false, index, error: `HTTP ${response.status}` };
-                    }
+                };
+                const negPrompt = negativePromptInput.value.trim();
+                if (negPrompt) {
+                    body.parameters.negative_prompt = negPrompt;
                 }
-            } catch (error) {
-                return { success: false, index, error: error.message };
+
+                try {
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: headers,
+                        body: JSON.stringify(body)
+                    });
+
+                    if (response.ok) {
+                        const blob = await response.blob();
+                        const imageUrl = URL.createObjectURL(blob);
+                        return { success: true, imageUrl, index, seed };
+                    } else if (response.status === 503) {
+                        try {
+                            const errJson = await response.json();
+                            const estTime = errJson.estimated_time || 20;
+                            return { 
+                                success: false, 
+                                index, 
+                                error: `模型正在載入 (Estimated: ${Math.round(estTime)}s). 請重試。` 
+                            };
+                        } catch (e) {
+                            return { success: false, index, error: '模型載入中 (503 Service Unavailable)，請稍後再試。' };
+                        }
+                    } else {
+                        try {
+                            const errJson = await response.json();
+                            return { success: false, index, error: errJson.error || `Error code: ${response.status}` };
+                        } catch (e) {
+                            return { success: false, index, error: `HTTP ${response.status}` };
+                        }
+                    }
+                } catch (error) {
+                    lastError = error;
+                    console.warn(`Failed to connect to ${domain}: ${error.message}. Trying next endpoint...`);
+                }
             }
+            
+            return { 
+                success: false, 
+                index, 
+                error: `網路連線失敗 (${lastError ? lastError.message : 'ERR_NAME_NOT_RESOLVED'})。請檢查網路或確認是否被防火牆阻擋。` 
+            };
         }
 
         // Create image HTML card dynamic element

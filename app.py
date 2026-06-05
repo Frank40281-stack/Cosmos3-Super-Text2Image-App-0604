@@ -398,70 +398,85 @@ aspect_sizes = {
 final_prompt = prompt + style_prompts[image_style] if prompt else ""
 width, height = aspect_sizes[aspect_ratio]
 
-# --- API Inference Function ---
+
+
+
+# --- API Inference Function (with DNS/Proxy fallback support) ---
 def call_huggingface_api(img_index, current_seed):
-    api_url = f"https://api-inference.huggingface.co/models/{model_choice}"
-    headers = {
-        "Authorization": f"Bearer {api_token}",
-        "Content-Type": "application/json"
-    }
+    domains = [
+        "https://api-inference.huggingface.co",
+        "https://api.huggingface.co"
+    ]
     
-    # Build payload parameters
-    parameters = {
-        "seed": current_seed,
-        "width": width,
-        "height": height
-    }
-    if negative_prompt:
-        parameters["negative_prompt"] = negative_prompt
-        
-    payload = {
-        "inputs": final_prompt,
-        "parameters": parameters
-    }
+    last_error = None
     
-    try:
-        response = requests.post(api_url, headers=headers, json=payload, timeout=90)
+    for domain in domains:
+        api_url = f"{domain}/models/{model_choice}"
+        headers = {
+            "Authorization": f"Bearer {api_token}",
+            "Content-Type": "application/json"
+        }
         
-        if response.status_code == 200:
-            # Check content-type to confirm it's an image
-            content_type = response.headers.get("content-type", "")
-            if "image" in content_type:
-                image_bytes = response.content
-                image = Image.open(io.BytesIO(image_bytes))
-                return {"index": img_index, "image": image, "seed": current_seed, "success": True}
-            else:
-                # API returned 200 but might be JSON status info
+        # Build payload parameters
+        parameters = {
+            "seed": current_seed,
+            "width": width,
+            "height": height
+        }
+        if negative_prompt:
+            parameters["negative_prompt"] = negative_prompt
+            
+        payload = {
+            "inputs": final_prompt,
+            "parameters": parameters
+        }
+        
+        try:
+            response = requests.post(api_url, headers=headers, json=payload, timeout=90)
+            
+            if response.status_code == 200:
+                # Check content-type to confirm it's an image
+                content_type = response.headers.get("content-type", "")
+                if "image" in content_type:
+                    image_bytes = response.content
+                    image = Image.open(io.BytesIO(image_bytes))
+                    return {"index": img_index, "image": image, "seed": current_seed, "success": True}
+                else:
+                    # API returned 200 but might be JSON status info
+                    try:
+                        json_data = response.json()
+                        return {"index": img_index, "error": f"API JSON: {json_data}", "success": False}
+                    except Exception:
+                        return {"index": img_index, "error": f"API returned non-image content: {content_type}", "success": False}
+            elif response.status_code == 503:
+                # Model is loading
                 try:
-                    json_data = response.json()
-                    return {"index": img_index, "error": f"API JSON: {json_data}", "success": False}
+                    error_json = response.json()
+                    est_time = error_json.get("estimated_time", 20.0)
+                    return {
+                        "index": img_index, 
+                        "error": f"模型正在載入中 (Model Loading)。預計剩餘時間: {est_time:.1f} 秒，請稍後重試。", 
+                        "success": False, 
+                        "loading": True
+                    }
                 except Exception:
-                    return {"index": img_index, "error": f"API returned non-image content: {content_type}", "success": False}
-        elif response.status_code == 503:
-            # Model is loading
-            try:
-                error_json = response.json()
-                est_time = error_json.get("estimated_time", 20.0)
-                return {
-                    "index": img_index, 
-                    "error": f"模型正在載入中 (Model Loading)。預計剩餘時間: {est_time:.1f} 秒，請稍後重試。", 
-                    "success": False, 
-                    "loading": True
-                }
-            except Exception:
-                return {"index": img_index, "error": "模型載入中 (503 Service Unavailable)，請稍後再試。", "success": False, "loading": True}
-        else:
-            try:
-                error_json = response.json()
-                error_msg = error_json.get("error", f"Error code: {response.status_code}")
-                return {"index": img_index, "error": error_msg, "success": False}
-            except Exception:
-                return {"index": img_index, "error": f"HTTP {response.status_code}: {response.text[:200]}", "success": False}
-                
-    except requests.exceptions.Timeout:
-        return {"index": img_index, "error": "請求超時。Hugging Face 伺服器回應時間過長。", "success": False}
-    except Exception as e:
-        return {"index": img_index, "error": f"請求發生錯誤: {str(e)}", "success": False}
+                    return {"index": img_index, "error": "模型載入中 (503 Service Unavailable)，請稍後再試。", "success": False, "loading": True}
+            else:
+                try:
+                    error_json = response.json()
+                    error_msg = error_json.get("error", f"Error code: {response.status_code}")
+                    return {"index": img_index, "error": error_msg, "success": False}
+                except Exception:
+                    return {"index": img_index, "error": f"HTTP {response.status_code}: {response.text[:200]}", "success": False}
+                    
+        except requests.exceptions.RequestException as e:
+            last_error = e
+            # Try the next domain in the loop
+            continue
+            
+    # If all endpoints failed
+    error_msg = f"網路連線失敗，無法解析 API 位址或連線逾時。請檢查網路或 Proxy 設定。詳細錯誤：{str(last_error)}"
+    return {"index": img_index, "error": error_msg, "success": False}
 
 
 # --- Generation Process ---
