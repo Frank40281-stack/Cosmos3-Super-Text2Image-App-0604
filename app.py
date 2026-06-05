@@ -279,7 +279,7 @@ st.markdown(
         <div class="info-item"><b>🤖 預設模型：</b><code>nvidia/Cosmos3-Super-Text2Image</code></div>
         <div class="info-item"><b>📝 使用說明：</b>設定 API Token、輸入文字 Prompt，展開「進階參數」微調設定，點擊「開始生成」即可。</div>
         <div class="link-list">
-            <a class="link-button" href="https://github.com" target="_blank">🐙 GitHub Repo</a>
+            <a class="link-button" href="https://github.com/Frank40281-stack/Cosmos3-Super-Text2Image-App-0604" target="_blank">🐙 GitHub Repo</a>
             <a class="link-button" href="https://share.streamlit.io" target="_blank">🚀 Streamlit Cloud</a>
         </div>
     </div>

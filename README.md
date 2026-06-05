@@ -43,7 +43,7 @@ Remember to set your `HF_TOKEN` in the Streamlit Cloud advanced settings (Secret
 
 ## Links
 
-- GitHub Repo: [GitHub Repo Link](https://github.com/)
+- GitHub Repo: [GitHub Repo](https://github.com/Frank40281-stack/Cosmos3-Super-Text2Image-App-0604)
 - Streamlit Demo: [Streamlit Demo Link](https://share.streamlit.io/)
 
 ## Screenshots
