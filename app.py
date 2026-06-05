@@ -402,7 +402,7 @@ width, height = aspect_sizes[aspect_ratio]
 
 
 # --- API Inference Function (with DNS/Proxy fallback support) ---
-def call_huggingface_api(img_index, current_seed):
+def call_huggingface_api(img_index, current_seed, target_model=None):
     domains = [
         "https://router.huggingface.co",
         "https://api-inference.huggingface.co",
@@ -410,9 +410,10 @@ def call_huggingface_api(img_index, current_seed):
     ]
     
     last_error = None
+    model_to_use = target_model if target_model else model_choice
     
     for domain in domains:
-        api_url = f"{domain}/models/{model_choice}"
+        api_url = f"{domain}/models/{model_to_use}"
         headers = {
             "Authorization": f"Bearer {api_token}",
             "Content-Type": "application/json"
@@ -458,17 +459,18 @@ def call_huggingface_api(img_index, current_seed):
                         "index": img_index, 
                         "error": f"模型正在載入中 (Model Loading)。預計剩餘時間: {est_time:.1f} 秒，請稍後重試。", 
                         "success": False, 
-                        "loading": True
+                        "loading": True,
+                        "status_code": response.status_code
                     }
                 except Exception:
-                    return {"index": img_index, "error": "模型載入中 (503 Service Unavailable)，請稍後再試。", "success": False, "loading": True}
+                    return {"index": img_index, "error": "模型載入中 (503 Service Unavailable)，請稍後再試。", "success": False, "loading": True, "status_code": response.status_code}
             else:
                 try:
                     error_json = response.json()
                     error_msg = error_json.get("error", f"Error code: {response.status_code}")
-                    return {"index": img_index, "error": error_msg, "success": False}
+                    return {"index": img_index, "error": error_msg, "status_code": response.status_code, "success": False}
                 except Exception:
-                    return {"index": img_index, "error": f"HTTP {response.status_code}: {response.text[:200]}", "success": False}
+                    return {"index": img_index, "error": f"HTTP {response.status_code}: {response.text[:200]}", "status_code": response.status_code, "success": False}
                     
         except requests.exceptions.RequestException as e:
             last_error = e
@@ -498,12 +500,24 @@ if st.button("✨ 開始生成 (Generate)", disabled=is_key_missing):
         # Execute API requests in parallel using thread pool
         with ThreadPoolExecutor(max_workers=min(4, num_images)) as executor:
             future_to_img = {
-                executor.submit(call_huggingface_api, i, seeds_to_use[i]): i 
+                executor.submit(call_huggingface_api, i, seeds_to_use[i], model_choice): i 
                 for i in range(num_images)
             }
-            
-            # Retrieve responses
             results = [future.result() for future in future_to_img]
+            
+        # Check if Cosmos3 model returned 404 (indicating serverless inference is not hosted/supported)
+        if model_choice == "nvidia/Cosmos3-Super-Text2Image" and any(res.get("status_code") == 404 for res in results):
+            status_box.warning("⚠️ Hugging Face 免費 API 不支援 Cosmos3 巨型模型 (HTTP 404)。已自動為您切換至推薦備用模型 FLUX.1-schnell 重新生成...")
+            time.sleep(2.0)
+            status_box.info("🚀 正在發送請求至備用模型 FLUX.1-schnell...")
+            
+            fallback_model = "black-forest-labs/FLUX.1-schnell"
+            with ThreadPoolExecutor(max_workers=min(4, num_images)) as executor:
+                future_to_img = {
+                    executor.submit(call_huggingface_api, i, seeds_to_use[i], fallback_model): i 
+                    for i in range(num_images)
+                }
+                results = [future.result() for future in future_to_img]
             
         # Clear status
         status_box.empty()
