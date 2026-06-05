@@ -620,6 +620,7 @@
         // Call HF API via Fetch (with DNS fallback support)
         async function callHF(modelId, token, prompt, width, height, seed, index) {
             const domains = [
+                'https://router.huggingface.co',
                 'https://api-inference.huggingface.co',
                 'https://api.huggingface.co'
             ];

@@ -404,6 +404,7 @@ width, height = aspect_sizes[aspect_ratio]
 # --- API Inference Function (with DNS/Proxy fallback support) ---
 def call_huggingface_api(img_index, current_seed):
     domains = [
+        "https://router.huggingface.co",
         "https://api-inference.huggingface.co",
         "https://api.huggingface.co"
     ]
