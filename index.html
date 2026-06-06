@@ -368,8 +368,13 @@
             </div>
         </div>
 
-        <!-- Main inputs -->
-        <div class="form-group">
+        <!-- API Key Warning Block -->
+        <div id="key-warning" class="status-box status-error" style="display: block;">⚠️ 請輸入 Hugging Face API Token 以繼續使用此應用程式。</div>
+
+        <!-- Main Content Area (Hidden until API Key is entered) -->
+        <div id="main-content" style="display: none;">
+            <!-- Main inputs -->
+            <div class="form-group">
             <label for="prompt">🎨 Prompt / 畫面描述</label>
             <textarea id="prompt" class="input-control" placeholder="描述你想要生成的圖像，例如: A futuristic city with flying cars at sunset..."></textarea>
         </div>
@@ -452,6 +457,7 @@
 
         <!-- Results Grid -->
         <div id="results-grid" class="results-container"></div>
+        </div>
 
         <!-- Page Footer -->
         <div class="footer">
@@ -500,17 +506,34 @@
             '3:4': { w: 768, h: 1024 }
         };
 
+        // Toggle UI based on API Token presence
+        function updateUIVisibility() {
+            const token = apiTokenInput.value.trim();
+            const mainContent = document.getElementById('main-content');
+            const keyWarning = document.getElementById('key-warning');
+            
+            if (token) {
+                mainContent.style.display = 'block';
+                keyWarning.style.display = 'none';
+            } else {
+                mainContent.style.display = 'none';
+                keyWarning.style.display = 'block';
+            }
+        }
+
         // Load saved API Token from localStorage
         window.addEventListener('DOMContentLoaded', () => {
             const savedToken = localStorage.getItem('hf_token');
             if (savedToken) {
                 apiTokenInput.value = savedToken;
             }
+            updateUIVisibility();
         });
 
         // Save API Token when modified
         apiTokenInput.addEventListener('input', () => {
             localStorage.setItem('hf_token', apiTokenInput.value.trim());
+            updateUIVisibility();
         });
 
         // Toggle seed input visibility
@@ -644,12 +667,13 @@
             cleanToken = cleanToken.replace(/^["']|["']$/g, '');
 
             const domains = [
+                'https://router.huggingface.co/hf-inference',
                 'https://router.huggingface.co',
                 'https://api-inference.huggingface.co',
                 'https://api.huggingface.co'
             ];
             
-            let lastError = null;
+            let lastErrorDetails = null;
             
             for (const domain of domains) {
                 const url = `${domain}/models/${modelId}`;
@@ -697,13 +721,13 @@
                     } else {
                         try {
                             const errJson = await response.json();
-                            return { success: false, index, statusCode: response.status, error: errJson.error || `Error code: ${response.status}` };
+                            lastErrorDetails = { statusCode: response.status, error: errJson.error || `Error code: ${response.status}` };
                         } catch (e) {
-                            return { success: false, index, statusCode: response.status, error: `HTTP ${response.status}` };
+                            lastErrorDetails = { statusCode: response.status, error: `HTTP ${response.status}` };
                         }
                     }
                 } catch (error) {
-                    lastError = error;
+                    lastErrorDetails = { statusCode: 500, error: error.message };
                     console.warn(`Failed to connect to ${domain}: ${error.message}. Trying next endpoint...`);
                 }
             }
@@ -711,7 +735,8 @@
             return { 
                 success: false, 
                 index, 
-                error: `網路連線失敗 (${lastError ? lastError.message : 'ERR_NAME_NOT_RESOLVED'})。請檢查網路或確認是否被防火牆阻擋。` 
+                statusCode: lastErrorDetails ? lastErrorDetails.statusCode : 500,
+                error: lastErrorDetails ? lastErrorDetails.error : '所有 API 端點均無法存取'
             };
         }
 

@@ -20,7 +20,7 @@ st.set_page_config(
 )
 
 # --- Sakura (Cherry Blossom) Falling Background Effect ---
-st.components.v1.html(
+st.iframe(
     """
     <script>
     const parentDoc = window.parent.document;
@@ -309,12 +309,12 @@ if not api_token:
         type="password",
         help="輸入您的 Hugging Face API Token (以 HF_ 開頭)。若要自動載入，請於 secrets.toml 中設定 HF_TOKEN。"
     )
+    if not api_token:
+        st.warning("⚠️ 請輸入 Hugging Face API Token 以繼續使用此應用程式。")
+        st.stop()
 
 # Disable generating if key is missing
 is_key_missing = not api_token
-
-if is_key_missing:
-    st.warning("⚠️ 請輸入 Hugging Face API Token 以繼續。")
 
 # --- UI Controls (Main form inputs) ---
 prompt = st.text_area(
@@ -411,12 +411,13 @@ def call_huggingface_api(img_index, current_seed, target_model=None):
     clean_token = clean_token.strip("'\"")
 
     domains = [
+        "https://router.huggingface.co/hf-inference",
         "https://router.huggingface.co",
         "https://api-inference.huggingface.co",
         "https://api.huggingface.co"
     ]
     
-    last_error = None
+    last_error_details = None
     model_to_use = target_model if target_model else model_choice
     
     for domain in domains:
@@ -454,9 +455,9 @@ def call_huggingface_api(img_index, current_seed, target_model=None):
                     # API returned 200 but might be JSON status info
                     try:
                         json_data = response.json()
-                        return {"index": img_index, "error": f"API JSON: {json_data}", "success": False}
+                        last_error_details = {"error": f"API JSON: {json_data}", "status_code": response.status_code}
                     except Exception:
-                        return {"index": img_index, "error": f"API returned non-image content: {content_type}", "success": False}
+                        last_error_details = {"error": f"API returned non-image content: {content_type}", "status_code": response.status_code}
             elif response.status_code == 503:
                 # Model is loading
                 try:
@@ -475,18 +476,19 @@ def call_huggingface_api(img_index, current_seed, target_model=None):
                 try:
                     error_json = response.json()
                     error_msg = error_json.get("error", f"Error code: {response.status_code}")
-                    return {"index": img_index, "error": error_msg, "status_code": response.status_code, "success": False}
+                    last_error_details = {"error": error_msg, "status_code": response.status_code}
                 except Exception:
-                    return {"index": img_index, "error": f"HTTP {response.status_code}: {response.text[:200]}", "status_code": response.status_code, "success": False}
+                    last_error_details = {"error": f"HTTP {response.status_code}: {response.text[:200]}", "status_code": response.status_code}
                     
         except requests.exceptions.RequestException as e:
-            last_error = e
-            # Try the next domain in the loop
+            last_error_details = {"error": f"網路連線失敗，無法解析 API 位址或連線逾時。詳細錯誤：{str(e)}", "status_code": 500}
             continue
             
     # If all endpoints failed
-    error_msg = f"網路連線失敗，無法解析 API 位址或連線逾時。請檢查網路或 Proxy 設定。詳細錯誤：{str(last_error)}"
-    return {"index": img_index, "error": error_msg, "success": False}
+    if last_error_details:
+        return {"index": img_index, "error": last_error_details["error"], "status_code": last_error_details["status_code"], "success": False}
+    else:
+        return {"index": img_index, "error": "所有 API 端點均無法存取且無回傳錯誤資訊", "status_code": 500, "success": False}
 
 
 # --- Generation Process ---
